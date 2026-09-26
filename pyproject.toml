@@ -1,0 +1,26 @@
+[project]
+name = "hms"
+version = "0.1.0"
+description = "Multimodal representation and retrieval for Agentic AI"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = []
+
+[dependency-groups]
+lint = ["ruff>=0.6"]
+
+[tool.uv]
+package = false
+python-preference = "managed"
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+src = ["src", "scripts", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "C4"]
+ignore = ["E501", "SIM108"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["hms"]
