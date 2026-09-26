@@ -1,0 +1,32 @@
+# Virtualenv and caches
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.ruff_cache/
+.pytest_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+
+# OS noise
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor and packaging caches (including ones left inside the vendored tree)
+.vscode/
+.idea/
+*.egg-info/
+
+# Local environment overrides
+.env
+.env.local
+.env.*.local
+
+# Competition data and generated artifacts (kept out of git on purpose)
+/data/
+/index/
+/runs/
+
+# Logs
+*.log

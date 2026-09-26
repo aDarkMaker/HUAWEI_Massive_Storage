@@ -1,0 +1,16 @@
+* text=auto eol=lf
+
+*.sh text eol=lf
+Makefile text eol=lf
+
+*.pdf binary
+*.docx binary
+*.jpg binary
+*.jpeg binary
+*.png binary
+*.graphml binary
+*.pickle binary
+*.gz binary
+
+uv.lock linguist-generated=true -diff
+third_party/** linguist-vendored=true
