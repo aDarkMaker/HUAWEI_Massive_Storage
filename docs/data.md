@@ -49,9 +49,14 @@ an `img_path`.
 
 The reference run wrote `img_path` values relative to a directory that no longer
 exists, so the baseline's `change_img_paths.py` has to be run from a specific
-working directory to repair them. `scripts/normalize_corpus.py` instead rewrites
-every `img_path` to an absolute path inside `data/parsed`, which makes all
-downstream consumers working-directory independent. Images are not copied: only
+working directory to repair them. That fixer only rewrites references starting
+with `images/`, while every reference in this corpus starts with
+`mineru-parsed/`, so it does nothing here; see `docs/competition.md` for the
+consequences. `scripts/normalize_corpus.py` instead derives the path from the
+file name and rewrites `img_path` to an absolute path inside `data/parsed`,
+which makes all downstream consumers working-directory independent. It also
+fails the run if any written path is not absolute, because a relative path is
+what silently disables the multimodal query path. Images are not copied: only
 the JSON is rewritten.
 
 ## Obtaining the data
@@ -71,9 +76,15 @@ build window and outside this pipeline.
 ## Normalized corpus
 
 `make normalize` reads `data/parsed` and writes `data/parsed_norm`. The two trees
-differ only in math spans inside `text` and `equation` blocks, plus the
-absolutized `img_path` values. Table bodies, captions and all other fields are
-copied verbatim, which keeps review simple:
+differ in three ways:
+
+- math spans inside `text` and `equation` blocks are rewritten;
+- `img_path` is rewritten to an absolute path;
+- multimodal blocks with no payload at all are dropped (12 of them, listed in
+  `docs/competition.md`), unless `--keep-blank-blocks` is passed.
+
+Table bodies, captions and every other field are copied verbatim, which keeps
+review simple:
 
 ```bash
 diff <(python -m json.tool data/parsed/<doc>/auto/<doc>_content_list.json) \

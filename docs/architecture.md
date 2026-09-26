@@ -30,6 +30,7 @@ stable, so `data/parsed` is treated as an input and the pipeline starts from it.
 | `src/hms/paths.py` | Every filesystem location, resolved once from `HMS_ROOT` |
 | `src/hms/logging_setup.py` | stdout plus rotating per-step file logging |
 | `src/hms/normalize/numeric.py` | Pure math-span rewriting, no I/O |
+| `src/hms/normalize/blocks.py` | Structural block predicates, no I/O |
 | `src/hms/index/compact_vdb.py` | nano-vectordb compaction, atomic replace |
 | `src/hms/eval/score.py` | Score formula and penalty breakdown |
 | `scripts/` | Argument parsing, orchestration, shell entry points |
@@ -64,13 +65,15 @@ Two details are worth calling out:
   naive `\$[^$]+\$` scanner pairs that closing `$` with the next opening one,
   which silently strips the whitespace of the prose between them.
 
-Verified on the full 100 document corpus (14,881 blocks, 1,629 text fields
-rewritten, 48,892 rule applications):
+Verified on the full 100 document corpus. Of 14,881 source blocks, 14,869 are
+written, 1,629 text fields are rewritten, and 12 blank multimodal blocks are
+dropped:
 
-- field-level diff against `data/parsed` is confined to `text` and `img_path`;
-  every other field is byte-identical;
+- aligning every non-dropped block against its source counterpart shows no
+  field differences other than `text` and `img_path`;
 - the multiset of digit characters is identical before and after in all 1,629
   rewritten fields, so no numeral is dropped or invented;
+- exactly the 12 known blank blocks are removed, and nothing else;
 - re-running is a no-op.
 
 ## Why the compaction is safe
