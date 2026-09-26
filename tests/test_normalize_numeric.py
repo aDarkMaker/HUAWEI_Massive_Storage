@@ -4,8 +4,14 @@ from __future__ import annotations
 
 import unittest
 from collections import Counter
+from pathlib import Path
 
-from hms.normalize import normalize_math, normalize_text
+from hms.normalize import (
+    is_blank_block,
+    normalize_math,
+    normalize_text,
+    resolve_image_path,
+)
 
 SPLIT_DIGITS = [
     (r"$\{ 1 0 \} ^ { 1 2 }$", r"$10^12$"),
@@ -134,6 +140,75 @@ class NormalizeMathTest(unittest.TestCase):
         # `\ =` goes through escaped_space, `\=` through relation_command.
         self.assertEqual(normalize_math(r"1 1 \ = \ 2 1"), "11 = 21")
         self.assertEqual(normalize_math(r"1 1 \= 2 1"), "11 = 21")
+
+
+class BlankBlockTest(unittest.TestCase):
+    """Cover detection of multimodal blocks MinerU emitted without payload."""
+
+    def test_blank_table_is_detected(self) -> None:
+        block = {
+            "type": "table",
+            "img_path": "",
+            "table_caption": [],
+            "table_footnote": [],
+            "page_idx": 3,
+        }
+        self.assertTrue(is_blank_block(block))
+
+    def test_whitespace_only_payload_still_counts_as_blank(self) -> None:
+        block = {"type": "table", "img_path": "   ", "table_caption": [""]}
+        self.assertTrue(is_blank_block(block))
+
+    def test_table_with_body_is_kept(self) -> None:
+        block = {"type": "table", "img_path": "", "table_body": "<table></table>"}
+        self.assertFalse(is_blank_block(block))
+
+    def test_table_with_caption_is_kept(self) -> None:
+        block = {"type": "table", "img_path": "", "table_caption": ["Table 1."]}
+        self.assertFalse(is_blank_block(block))
+
+    def test_image_with_path_is_kept(self) -> None:
+        block = {"type": "image", "img_path": "/tmp/a.jpg", "image_caption": []}
+        self.assertFalse(is_blank_block(block))
+
+    def test_image_with_only_caption_is_kept(self) -> None:
+        # A caption alone is usable text, even without the rendered image.
+        block = {"type": "image", "img_path": "", "image_caption": ["Fig. 7."]}
+        self.assertFalse(is_blank_block(block))
+
+    def test_text_and_equation_blocks_are_never_blank(self) -> None:
+        for block in (
+            {"type": "text", "text": ""},
+            {"type": "equation", "text": ""},
+            {"type": "text"},
+        ):
+            with self.subTest(block=block):
+                self.assertFalse(is_blank_block(block))
+
+
+class ResolveImagePathTest(unittest.TestCase):
+    """Cover the rewrite that keeps image references working directory free."""
+
+    def test_result_is_always_absolute(self) -> None:
+        resolved = resolve_image_path("images/a.jpg", Path("some/relative/dir"))
+        self.assertTrue(resolved.is_absolute())
+
+    def test_mineru_relative_prefix_is_discarded(self) -> None:
+        # The reference corpus uses this shape, which the upstream fixer misses
+        # because it only rewrites references starting with `images/`.
+        raw = "mineru-parsed/doc-1/auto/images/deadbeef.jpg"
+        resolved = resolve_image_path(raw, Path("/corpus/doc-1/auto/images"))
+        self.assertEqual(
+            resolved, Path("/corpus/doc-1/auto/images/deadbeef.jpg").resolve()
+        )
+
+    def test_windows_separators_are_handled(self) -> None:
+        resolved = resolve_image_path(r"images\sub\a.jpg", Path("/corpus/images"))
+        self.assertEqual(resolved, Path("/corpus/images/a.jpg").resolve())
+
+    def test_bare_filename_is_accepted(self) -> None:
+        resolved = resolve_image_path("a.jpg", Path("/corpus/images"))
+        self.assertEqual(resolved, Path("/corpus/images/a.jpg").resolve())
 
 
 if __name__ == "__main__":
