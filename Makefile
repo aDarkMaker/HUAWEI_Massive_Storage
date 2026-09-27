@@ -3,7 +3,7 @@ SHELL := /bin/bash
 PYTHONPATH := src
 export PYTHONPATH
 
-.PHONY: help setup lock lint format test normalize compact build score clean
+.PHONY: help setup lock lint format test normalize compact check serve build eval score clean
 
 help:
 	@grep -E '^[a-zA-Z_-]+:' $(MAKEFILE_LIST) | cut -d: -f1 | sort -u
@@ -30,6 +30,15 @@ normalize:
 
 compact:
 	uv run python scripts/compact_index.py
+
+check:
+	bash scripts/check_endpoints.sh configs/env.tuned build
+
+serve:
+	bash scripts/serve_index.sh
+
+eval:
+	bash scripts/run_eval.sh
 
 build:
 	bash scripts/build_index.sh

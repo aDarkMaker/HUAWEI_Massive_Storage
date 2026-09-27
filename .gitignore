@@ -28,5 +28,14 @@ desktop.ini
 /index/
 /runs/
 
+# Runtime state the vendored tree creates when scripts are run from inside it:
+# the server writes its own copy of the store there, and normalize/serve leave a
+# symlink named mineru-parsed behind. Both are regenerated, so neither belongs
+# in version control.
+/third_party/RAG-Anything/rag_storage/
+/third_party/RAG-Anything/index/
+/third_party/RAG-Anything/mineru-parsed
+/third_party/RAG-Anything/all_logs/
+
 # Logs
 *.log
